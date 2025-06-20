@@ -1,12 +1,10 @@
-import { readFile, writeFile } from 'fs/promises';
-import { getFullFilePath } from '../utils/path.js';
+import { getFullFilePath, readFileData, writeFileData } from '../utils/path.js';
 import { validateUser, validateUserId, validateUsers, ValidationError } from '../utils/validators.js';
 
 const DBPath = getFullFilePath('../database.json');
 
-const read = () => readFile(DBPath, 'utf-8').then(JSON.parse);
-
-const write = (data) => writeFile(DBPath, JSON.stringify(data, null, 2));
+const read = () => readFileData(DBPath);
+const write = (data) => writeFileData(DBPath, data);
 
 const getUsers = async () => {
   const { users } = await read();

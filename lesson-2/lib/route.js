@@ -1,21 +1,11 @@
 import { sendResponse } from '../utils/network.js';
-
-function getUrlParams(path) {
-  const params = [];
-  const routePath = path.replace(/(\/[^/]+)\/(\d+)/g, (match, pathSlice, id) => {
-    params.push(id);
-    return `${pathSlice}/[id]`;
-  });
-  return { routePath, params };
-}
+import { loadRouter } from './loadRouter.js';
 
 const handleRoute = async (req, res) => {
   try {
     const { method, url } = req;
 
-    const { routePath, params } = getUrlParams(url);
-
-    const router = await import(`../routes${routePath}/route.js`);
+    const { router, routeParams } = await loadRouter(url);
 
     const handler = router[method];
 
@@ -24,7 +14,7 @@ const handleRoute = async (req, res) => {
       return;
     }
 
-    handler(req, res, params).catch((error) => {
+    handler(req, res, routeParams).catch((error) => {
       if (error.name === 'AppError') {
         sendResponse(res, error.statusCode, { error: error.message });
       } else {
