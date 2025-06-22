@@ -1,0 +1,8 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache nodejs tini \
+    && adduser -D -h /home/node node
+
+WORKDIR /home/node
+
+USER node
