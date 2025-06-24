@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json .npmrc ./
+COPY package.json package-lock.json .npmrc eslint.config.js ./
 COPY config ./config
 
 RUN npm install
