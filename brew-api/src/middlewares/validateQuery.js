@@ -7,6 +7,6 @@ export const validateQuery = (schema) => (req, res, next) => {
       .json({ errors: result.error.format(), where: 'query' });
   }
 
-  req.params = result.data;
+  req.validatedQuery = result.data;
   next();
 };

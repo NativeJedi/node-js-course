@@ -15,7 +15,6 @@ class BrewModel {
     const id = nanoid();
     const brew = { id, ...dto };
     this.#store.set(id, brew);
-    console.log(this.#store);
     return brew;
   }
 

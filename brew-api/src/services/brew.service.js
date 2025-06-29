@@ -1,10 +1,29 @@
+const filters = {
+  ratingMin: (brews, value) => brews.filter((brew) => brew.rating >= value),
+  method: (brews, value) => brews.filter((brew) => brew.method === value),
+};
+
+const filterBrewsByQuery = (brews, query) => {
+  return Object.entries(filters).reduce((filteredBrews, [fName, filter]) => {
+    const isFilterActive = fName in query;
+
+    if (isFilterActive) {
+      return filter(filteredBrews, query[fName]);
+    }
+
+    return filteredBrews;
+  }, brews);
+};
+
 export class BrewService {
   constructor({ brewModel }) {
     this.brewModel = brewModel;
   }
 
-  getAll() {
-    return this.brewModel.getAll();
+  getAll(query) {
+    const brews = this.brewModel.getAll();
+
+    return filterBrewsByQuery(brews, query);
   }
 
   getOne(id) {

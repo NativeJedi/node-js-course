@@ -6,7 +6,7 @@ class BrewController {
   }
 
   index = (_req, res) => {
-    res.json(this.brewService.getAll());
+    res.json(this.brewService.getAll(_req.validatedQuery));
   };
 
   getOne = (req, res) => {

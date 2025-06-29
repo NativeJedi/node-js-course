@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { makeInvoker } from '../middlewares/makeInvoker.js';
 import { validate } from '../middlewares/validate.js';
-import { BrewDTO, methodValidation } from '../dto/brew.dto.js';
+import {
+  BrewDTO,
+  methodValidation,
+  ratingValidation,
+} from '../dto/brew.dto.js';
 import { validateParams } from '../middlewares/validateParams.js';
 import { validateQuery } from '../middlewares/validateQuery.js';
 import { registry } from '../docs/registry.js';
@@ -15,6 +19,7 @@ const paramsSchema = z.object({
 
 const filterParamsSchema = z.object({
   method: methodValidation.optional().describe('Brew method'),
+  ratingMin: ratingValidation.describe('Brew rating'),
 });
 
 const ctl = makeInvoker('brewController');
@@ -24,6 +29,9 @@ registry.registerPath({
   method: 'get',
   path: '/api/brews',
   tags: ['Brews'],
+  request: {
+    query: filterParamsSchema,
+  },
   responses: {
     200: {
       description: 'Array of brews',
