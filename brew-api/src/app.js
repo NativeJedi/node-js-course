@@ -10,6 +10,7 @@ import { errorHandler } from './middlewares/errorHandler.js';
 import { logger } from './middlewares/logger.js';
 import { config } from './config/index.js';
 import { createZodSpec } from './docs/openapi.js';
+import { notFound } from './middlewares/notFound.js';
 
 const createApp = () => {
   const app = express();
@@ -50,6 +51,8 @@ const createApp = () => {
 
   // Register brew routes
   app.use('/api', brewRouter);
+
+  app.use(notFound);
 
   app.use(errorHandler());
 
