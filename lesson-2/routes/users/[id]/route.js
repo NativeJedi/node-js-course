@@ -9,7 +9,7 @@ import { getRequestData, sendResponse } from '../../../utils/network.js';
 
 
 async function GET(req, res, params) {
-  const user = await getUsersById(params[0]);
+  const user = await getUsersById(params.id);
 
   sendResponse(res, 200, { data: user });
 }
@@ -17,7 +17,7 @@ async function GET(req, res, params) {
 async function POST(req, res, params) {
   const user = await getRequestData(req);
 
-  const updatedUser = await addUserById(params[0], user);
+  const updatedUser = await addUserById(params.id, user);
 
   sendResponse(res, 200, { data: updatedUser });
 }
@@ -25,7 +25,7 @@ async function POST(req, res, params) {
 async function PUT(req, res, params) {
   const user = await getRequestData(req);
 
-  await replaceUserById(params[0], user);
+  await replaceUserById(params.id, user);
 
   sendResponse(res, 200, { data: user });
 }
@@ -33,13 +33,13 @@ async function PUT(req, res, params) {
 async function PATCH(req, res, params) {
   const user = await getRequestData(req);
 
-  await updateUserFieldsById(params[0], user);
+  await updateUserFieldsById(params.id, user);
 
   sendResponse(res, 200, { data: user });
 }
 
 async function DELETE(req, res, params) {
-  const removed = await deleteUserById(params[0]);
+  const removed = await deleteUserById(params.id);
 
   await sendResponse(res, 200, { data: removed });
 }
