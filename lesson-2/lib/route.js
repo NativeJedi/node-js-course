@@ -14,16 +14,14 @@ const handleRoute = async (req, res) => {
       return;
     }
 
-    handler(req, res, routeParams).catch((error) => {
-      if (error.name === 'AppError') {
-        sendResponse(res, error.statusCode, { error: error.message });
-      } else {
-        throw error;
-      }
-    });
+    await handler(req, res, routeParams);
   } catch (error) {
-    console.error(error);
-    sendResponse(res, 500, { error: 'Internal server error' });
+    if (error.name === 'AppError') {
+      sendResponse(res, error.statusCode, { error: error.message });
+    } else {
+      console.error(error);
+      sendResponse(res, 500, { error: 'Internal server error' });
+    }
   }
 };
 

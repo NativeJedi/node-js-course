@@ -6,4 +6,10 @@ class AppError extends Error {
   }
 }
 
-export { AppError };
+class RouteNotFoundError extends AppError {
+  constructor(route) {
+    super(`Not found: ${route}`, 404);
+  }
+}
+
+export { AppError, RouteNotFoundError };
