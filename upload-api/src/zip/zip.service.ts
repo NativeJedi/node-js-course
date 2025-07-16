@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Dirent } from 'node:fs';
-import * as path from 'node:path';
-import * as sharp from 'sharp';
-import * as AdmZip from 'adm-zip';
-import { PREVIEWS_DIST, TMP_DIST_UNZIPPED } from '../constants';
-import { createFolders, readFilesFromFolder, remove } from '../utils/fs';
-import { runPreviewWorker } from '../utils/worker';
-
-type GenerateResult = {
-  input: string;
-  output: string | null;
-};
+import path from 'node:path';
+import AdmZip from 'adm-zip';
+import { PREVIEWS_DIST, TMP_DIST_UNZIPPED } from '../constants.js';
+import { createFolders, readFilesFromFolder, remove } from '../utils/fs.js';
+import { createJobCounter, runPreviewWorker } from '../utils/worker.js';
 
 async function generateThumbnails(
   files: Dirent[],
@@ -19,29 +13,19 @@ async function generateThumbnails(
 ) {
   performance.mark('start');
 
+  const { buffer, getErrorCount, getSuccessCount } = createJobCounter();
+
   const filesPromises = files.map(
-    runPreviewWorker({ inputFolder, outputFolder }),
+    runPreviewWorker({ inputFolder, outputFolder, buffer }),
   );
 
-  const results = await Promise.all(filesPromises);
-
-  const { processed, skipped } = results.reduce(
-    (acc, result) => {
-      if (result.success) {
-        acc.processed++;
-      } else {
-        acc.skipped++;
-      }
-      return acc;
-    },
-    { processed: 0, skipped: 0 },
-  );
+  await Promise.all(filesPromises);
 
   performance.mark('end');
 
   return {
-    processed,
-    skipped,
+    processed: getSuccessCount(),
+    skipped: getErrorCount(),
     durationMs: +performance
       .measure('duration', 'start', 'end')
       .duration.toFixed(2),

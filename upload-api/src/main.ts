@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { createDistFolders } from './utils/fs';
+import { AppModule } from './app.module.js';
+import { createDistFolders } from './utils/fs.js';
 
 async function bootstrap() {
   await createDistFolders();

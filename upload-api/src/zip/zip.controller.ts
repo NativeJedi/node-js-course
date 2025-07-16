@@ -5,8 +5,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ZipService } from './zip.service';
-import { TMP_DIST_ZIPPED } from '../constants';
+import { ZipService } from './zip.service.js';
+import { TMP_DIST_ZIPPED } from '../constants.js';
 
 @Controller('zip')
 export class ZipController {

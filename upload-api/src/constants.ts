@@ -1,4 +1,4 @@
-import * as path from 'node:path';
+import path from 'node:path';
 
 const TMP_DIST = './tmp';
 const TMP_DIST_ZIPPED = path.join(TMP_DIST, 'zipped');

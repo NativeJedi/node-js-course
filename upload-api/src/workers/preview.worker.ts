@@ -1,15 +1,23 @@
-import * as sharp from 'sharp';
-import { parentPort, workerData } from 'node:worker_threads';
+import sharp from 'sharp';
+import { workerData } from 'node:worker_threads';
+import { ERROR_COUNTER_INDEX, SUCCESS_COUNTER_INDEX } from '../utils/worker.js';
 
-const run = (job: { input: string; output: string }) =>
-  sharp(job.input)
+const run = (job: {
+  input: string;
+  output: string;
+  buffer: SharedArrayBuffer;
+}) => {
+  const counter = new Int32Array(job.buffer);
+
+  return sharp(job.input)
     .resize(150)
     .toFile(job.output)
-    .then(() => parentPort?.postMessage?.({ success: true }))
-    .catch((e) => {
-      const error = e instanceof Error ? e.message : String(e);
-
-      parentPort?.postMessage?.({ success: false, error });
+    .then(() => {
+      Atomics.add(counter, SUCCESS_COUNTER_INDEX, 1);
+    })
+    .catch(() => {
+      Atomics.add(counter, ERROR_COUNTER_INDEX, 1);
     });
+};
 
 run(workerData);

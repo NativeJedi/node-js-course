@@ -2,8 +2,8 @@ import {
   PREVIEWS_DIST,
   TMP_DIST_UNZIPPED,
   TMP_DIST_ZIPPED,
-} from '../constants';
-import * as fs from 'node:fs/promises';
+} from '../constants.js';
+import fs from 'node:fs/promises';
 
 const createFolders = async (foldersPaths: string[]) => {
   const promises = foldersPaths.map((d) => fs.mkdir(d, { recursive: true }));
