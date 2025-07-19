@@ -1,25 +1,40 @@
-import { Body, Controller, Get, Param, Post, Res, UploadedFile, UseInterceptors, ForbiddenException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Res,
+  ForbiddenException,
+  UseInterceptors,
+  Headers,
+} from '@nestjs/common';
 import { Response } from 'express';
-import {UserDTO} from "../dto";
-import {Store} from "../store/store";
+import { CreateUserDTO, UserDTO } from '../dto/user.dto';
+import { UsersService } from './users.service';
+import {
+  AddIconUrlInterceptor,
+  SaveIconInterceptor,
+} from './interceptors/save-icon.interceptor';
 
 @Controller('/api/users')
 export class UsersController {
-  constructor(private store: Store) {}
+  constructor(private usersService: UsersService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('icon'))
-  createUser(
-    @Body('name') name: string,
-    @UploadedFile() icon?: Express.Multer.File,
-  ): UserDTO {
-    throw new ForbiddenException('Not implemented yet');
+  @UseInterceptors(SaveIconInterceptor('icon'), AddIconUrlInterceptor)
+  createUser(@Body() dto: CreateUserDTO): Promise<UserDTO> {
+    return this.usersService.createOne(dto);
   }
 
   @Get()
-  list(): { items: UserDTO[]; total: number } {
-    throw new ForbiddenException('Not implemented yet');
+  async list(): Promise<{ items: UserDTO[]; total: number }> {
+    const items = await this.usersService.getAll();
+
+    return {
+      items,
+      total: items.length,
+    };
   }
 
   @Get('icons/:iconPath')
