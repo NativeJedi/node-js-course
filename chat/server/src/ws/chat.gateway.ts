@@ -4,14 +4,15 @@ import {
   OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import Redis from 'ioredis';
 import { v4 as uuid } from 'uuid';
-import { ForbiddenException, OnModuleDestroy } from '@nestjs/common';
-import { Store } from '../store/store';
+import { OnModuleDestroy } from '@nestjs/common';
+import { MessagesService } from '../messages/messages.service';
 
 const INSTANCE_ID = uuid(); // 🎯 унікальний для кожної репліки
 @WebSocketGateway({ path: '/ws', cors: true })
@@ -19,18 +20,23 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
   private readonly sub: Redis;
   private event$ = new Subject<{ ev: string; data: any; meta?: any }>();
 
+  @WebSocketServer()
+  server!: Server;
+
   constructor(
-    private store: Store,
     private readonly redis: Redis,
+    private messagesService: MessagesService,
   ) {
     this.sub = this.redis.duplicate();
 
     this.sub.subscribe('chat-events');
+
     this.sub.on('message', (_, raw) => {
       const parsed = JSON.parse(raw);
+
       if (parsed.src === INSTANCE_ID) return; // ⬅️ skip own
-      console.log('Received event:', parsed);
-      this.event$.next(parsed);
+
+      this.server.to(parsed.data.chatId).emit(parsed.ev, parsed.data);
     });
 
     this.event$
@@ -54,6 +60,7 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     if (!user) return client.disconnect(true);
     client.data.user = user;
 
+    console.log(`[${INSTANCE_ID}]: ${user} connected`);
     // forward broadcast events belonging to this user
   }
 
@@ -62,7 +69,7 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { chatId: string },
   ) {
-    throw new ForbiddenException('Not implemented yet');
+    client.join(body.chatId);
   }
 
   @SubscribeMessage('leave')
@@ -70,15 +77,27 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { chatId: string },
   ) {
-    throw new ForbiddenException('Not implemented yet');
+    client.leave(body.chatId);
   }
 
   @SubscribeMessage('send')
-  onSend(
+  async onSend(
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { chatId: string; text: string },
   ) {
-    throw new ForbiddenException('Not implemented yet');
+    const message = await this.messagesService.addChatMessage(
+      client.data.user,
+      body.chatId,
+      body.text,
+    );
+
+    this.server.to(body.chatId).emit('message', message);
+
+    this.event$.next({
+      ev: 'message',
+      data: message,
+      meta: { local: true },
+    });
   }
 
   @SubscribeMessage('typing')
@@ -86,6 +105,18 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { chatId: string; isTyping: boolean },
   ) {
-    throw new ForbiddenException('Not implemented yet');
+    const event = {
+      chatId: body.chatId,
+      user: client.data.user,
+      isTyping: body.isTyping,
+    };
+
+    this.server.to(event.chatId).emit('typing', event);
+
+    this.event$.next({
+      ev: 'typing',
+      data: event,
+      meta: { local: true },
+    });
   }
 }

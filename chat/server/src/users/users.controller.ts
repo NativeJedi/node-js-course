@@ -4,12 +4,8 @@ import {
   Get,
   Param,
   Post,
-  Res,
-  ForbiddenException,
   UseInterceptors,
-  Headers,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { CreateUserDTO, UserDTO } from '../dto/user.dto';
 import { UsersService } from './users.service';
 import {
@@ -38,7 +34,7 @@ export class UsersController {
   }
 
   @Get('icons/:iconPath')
-  async icon(@Param('iconPath') iconPath: string, @Res() res: Response) {
-    throw new ForbiddenException('Not implemented yet');
+  async icon(@Param('iconPath') iconPath: string) {
+    return this.usersService.getUserIcon(iconPath);
   }
 }

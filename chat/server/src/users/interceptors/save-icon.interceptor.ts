@@ -10,7 +10,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { extname } from 'path';
 import { generateUniqueId } from '../../common/utils';
 import { UPLOAD_DIR_PATH } from '../../constants';
-import * as path from 'node:path';
 
 export function SaveIconInterceptor(fieldName: string) {
   return FileInterceptor(fieldName, {
@@ -32,9 +31,7 @@ export class AddIconUrlInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const file = request.file;
 
-    request.body.iconUrl = file
-      ? path.join(UPLOAD_DIR_PATH, file.filename)
-      : '';
+    request.body.iconUrl = file ? file.filename : '';
 
     return next.handle();
   }

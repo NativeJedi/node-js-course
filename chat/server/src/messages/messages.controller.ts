@@ -15,12 +15,14 @@ export class MessagesController {
 
   @Get()
   async list(
-    @Headers('X-User') user: string,
     @Param('id') chatId: string,
     @Query('cursor') cursor?: string,
     @Query('limit') limit = '30',
   ) {
-    const items = await this.messagesService.getChatMessages(chatId);
+    const items = await this.messagesService.getChatMessages(chatId, {
+      cursor,
+      limit: +limit,
+    });
 
     return {
       items,

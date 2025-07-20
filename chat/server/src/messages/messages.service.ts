@@ -36,9 +36,16 @@ export class MessagesService {
     return message;
   }
 
-  async getChatMessages(chatId: MessageDTO['chatId']): Promise<MessageDTO[]> {
+  async getChatMessages(
+    chatId: MessageDTO['chatId'],
+    { cursor, limit }: { cursor?: string; limit: number },
+  ): Promise<MessageDTO[]> {
     const messages = await this.read();
 
-    return messages.filter((message) => message.chatId === chatId);
+    return messages
+      .filter((m) => m.chatId === chatId)
+      .filter((m) => (cursor ? m.sentAt < cursor : true))
+      .sort((a, b) => b.sentAt.localeCompare(a.sentAt))
+      .slice(0, limit);
   }
 }
