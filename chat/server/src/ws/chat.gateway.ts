@@ -7,18 +7,39 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, Subject } from 'rxjs';
 import Redis from 'ioredis';
 import { v4 as uuid } from 'uuid';
 import { OnModuleDestroy } from '@nestjs/common';
 import { MessagesService } from '../messages/messages.service';
+import { MessageDTO } from '../dto/message.dto';
 
 const INSTANCE_ID = uuid(); // 🎯 унікальний для кожної репліки
+
+type ChatEvent<T> = T & { src: typeof INSTANCE_ID };
+
+type MessageEvent = ChatEvent<{
+  ev: 'message';
+  data: MessageDTO;
+}>;
+
+type TypingEvent = ChatEvent<{
+  ev: 'typing';
+  data: {
+    isTyping: boolean;
+    chatId: string;
+    user: string;
+  };
+}>;
+
+type GateWayEvent = MessageEvent | TypingEvent;
+
+const isLocalEvent = (ev: GateWayEvent) => ev.src === INSTANCE_ID;
+
 @WebSocketGateway({ path: '/ws', cors: true })
 export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
   private readonly sub: Redis;
-  private event$ = new Subject<{ ev: string; data: any; meta?: any }>();
+  private event$ = new Subject<GateWayEvent>();
 
   @WebSocketServer()
   server!: Server;
@@ -32,21 +53,22 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     this.sub.subscribe('chat-events');
 
     this.sub.on('message', (_, raw) => {
-      const parsed = JSON.parse(raw);
+      const event: GateWayEvent = JSON.parse(raw);
 
-      if (parsed.src === INSTANCE_ID) return; // ⬅️ skip own
+      if (isLocalEvent(event)) return;
 
-      this.server.to(parsed.data.chatId).emit(parsed.ev, parsed.data);
+      this.event$.next(event);
     });
 
-    this.event$
-      .pipe(filter((e) => e.meta?.local))
-      .subscribe((e) =>
-        this.redis.publish(
-          'chat-events',
-          JSON.stringify({ ...e, meta: undefined, src: INSTANCE_ID }),
-        ),
-      );
+    this.event$.subscribe((e) => {
+      this.server.to(e.data.chatId).emit(e.ev, e.data);
+    });
+
+    const localEvent$ = this.event$.pipe(filter(isLocalEvent));
+
+    localEvent$.subscribe((e: GateWayEvent) =>
+      this.redis.publish('chat-events', JSON.stringify(e)),
+    );
   }
 
   onModuleDestroy() {
@@ -91,12 +113,10 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
       body.text,
     );
 
-    this.server.to(body.chatId).emit('message', message);
-
     this.event$.next({
       ev: 'message',
       data: message,
-      meta: { local: true },
+      src: INSTANCE_ID,
     });
   }
 
@@ -105,18 +125,14 @@ export class ChatGateway implements OnGatewayConnection, OnModuleDestroy {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { chatId: string; isTyping: boolean },
   ) {
-    const event = {
-      chatId: body.chatId,
-      user: client.data.user,
-      isTyping: body.isTyping,
-    };
-
-    this.server.to(event.chatId).emit('typing', event);
-
     this.event$.next({
       ev: 'typing',
-      data: event,
-      meta: { local: true },
+      data: {
+        chatId: body.chatId,
+        user: client.data.user,
+        isTyping: body.isTyping,
+      },
+      src: INSTANCE_ID,
     });
   }
 }
