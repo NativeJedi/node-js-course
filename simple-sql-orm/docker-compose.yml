@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ormtest
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/ormtest
+      NODE_ENV: development
+      PORT: 3000
+      MIGRATIONS_DIR: /app/migrations
+    ports:
+      - "3000:3000"
+    volumes:
+      # 1 · Код → /app (гаряче оновлення)
+      - ./:/app
+      # 2 · node_modules із контейнера в окремий том, щоб не перетирались
+      - node_modules:/app/node_modules
+      # 3 migrations → /app/migrations (для ручного запуску)
+      - ./migrations:/app/migrations
+
+volumes:
+  pgdata:
+  node_modules:
