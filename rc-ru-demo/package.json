@@ -1,0 +1,16 @@
+{
+  "name": "rc-ru-demo",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Ruslan Lukianenko",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "demo:ru": "chmod +x ./src/demo.sh && ./src/demo.sh uncommitted",
+    "demo:rc": "chmod +x ./src/demo.sh && ./src/demo.sh committed"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}
