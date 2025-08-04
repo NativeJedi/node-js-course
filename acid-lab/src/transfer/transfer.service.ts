@@ -44,12 +44,4 @@ export class TransferService {
       return await manager.save(transfer);
     });
   }
-
-  findAll() {
-    return `This action returns all transfer`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} transfer`;
-  }
 }

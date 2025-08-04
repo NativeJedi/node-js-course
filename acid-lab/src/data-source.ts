@@ -25,7 +25,6 @@ const envConfigMap: Record<string, DataSourceOptions> = {
 
 const TypeOrmConfig = envConfigMap[AppConfig.ENV] || envConfigMap.production;
 
-console.log({ TypeOrmConfig });
 const AppDataSource = new DataSource(TypeOrmConfig);
 
 export { AppDataSource, TypeOrmConfig };
