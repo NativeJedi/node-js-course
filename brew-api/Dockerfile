@@ -3,16 +3,15 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 COPY src ./src
+COPY build.js ./build.js
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-CMD ["npm","run","build"]
-
-COPY dist ./dist
+RUN npm run build
 
 FROM nativejedi/lite-node AS runtime
 
