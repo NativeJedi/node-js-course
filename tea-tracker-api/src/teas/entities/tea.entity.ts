@@ -11,12 +11,10 @@ export class Tea {
 
   @ApiProperty({
     example: 'India',
-    required: false,
     minLength: 2,
     maxLength: 30,
-    nullable: true,
   })
-  origin: Nullable<string>;
+  origin: string;
 
   @ApiProperty({
     example: 2,
