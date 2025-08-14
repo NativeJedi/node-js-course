@@ -45,7 +45,7 @@ export class TeasService {
   }
 
   async create(tea: Omit<Tea, 'id'>): Promise<Tea> {
-    const newTea = { id: Date.now(), ...tea };
+    const newTea = { ...tea, id: Date.now() };
     this.teas.push(newTea);
     return newTea;
   }
@@ -57,9 +57,11 @@ export class TeasService {
       throw new NotFoundException();
     }
 
-    this.teas[index] = { ...this.teas[index], ...tea };
+    const updatedTea = { ...this.teas[index], ...tea, id };
 
-    return this.teas[index];
+    this.teas[index] = updatedTea;
+
+    return updatedTea;
   }
 
   async remove(id: number): Promise<void> {
